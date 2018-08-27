@@ -1,2 +1,2 @@
-# az-speedtest-logger
-Azure implementation of the speedtest logger
+# speedtest-logger
+Implementation of the speedtest logger
