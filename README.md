@@ -1,5 +1,5 @@
-speedtest-logger
-================
+az-speedtest-logger
+===================
 _Implementation of the speedtest logger_
 
 Notes from implementation
