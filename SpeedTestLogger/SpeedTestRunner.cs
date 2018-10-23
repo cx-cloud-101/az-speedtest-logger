@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using SpeedTest;
 using SpeedTest.Models;
@@ -10,13 +12,13 @@ namespace SpeedTestLogger
     {
         private readonly SpeedTestClient _client;
         private readonly Settings _settings;
-        private readonly string _country;
+        private readonly RegionInfo _location;
 
-        public SpeedTestRunner(string country)
+        public SpeedTestRunner(RegionInfo location)
         {
             _client = new SpeedTestClient();
             _settings = _client.GetSettings();
-            _country = country;
+            _location = location;
         }
 
         public TestData RunSpeedTest()
@@ -39,14 +41,14 @@ namespace SpeedTestLogger
                     Latitude = _settings.Client.Latitude,
                     Longitude = _settings.Client.Longitude,
                     Isp = _settings.Client.Isp,
-                    Country = _country
+                    Country = _location.TwoLetterISORegionName
                 },
                 Server = new TestServer
                 {
                     Host = server.Host,
                     Latitude = server.Latitude,
                     Longitude = server.Longitude,
-                    Country = server.Country,
+                    Country = GetISORegionNameFromEnglishName(server.Country),
                     Distance = server.Distance,
                     Ping = server.Latency,
                     Id = server.Id
@@ -56,16 +58,19 @@ namespace SpeedTestLogger
 
         private Server FindBestTestServer()
         {
-            return _settings.Servers
-                .Where(s => s.Country.Equals(_country))
-                .Take(10)
+            var tenLocalServers = _settings.Servers
+                .Where(s => s.Country.Equals(_location.EnglishName))
+                .Take(10);
+
+            var serversOrdersByLatency = tenLocalServers
                 .Select(s =>
                 {
                     s.Latency = _client.TestServerLatency(s);
                     return s;
                 })
-                .OrderBy(s => s.Latency)
-                .First();
+                .OrderBy(s => s.Latency);
+            
+            return serversOrdersByLatency.First();
         }
 
         private double TestDownloadSpeed(Server server)
@@ -85,6 +90,31 @@ namespace SpeedTestLogger
         private double ConvertSpeedToMbps(double speed)
         {
             return Math.Round(speed / 1024, 2);
+        }
+
+        private string GetISORegionNameFromEnglishName(string englishName)
+        {
+            // Wondering why this culture isn't supported? https://stackoverflow.com/a/41879861/840453
+            var unsupportedCultureLCID = 4096;
+            
+            var allRegions = CultureInfo
+                .GetCultures(CultureTypes.SpecificCultures)
+                .Select(culture => culture.LCID)
+                .Where(lcid => lcid != unsupportedCultureLCID)
+                .Select(lcid => new RegionInfo(lcid));
+            
+            var region = allRegions.FirstOrDefault(c =>
+            {
+                return String.Equals(c.EnglishName, englishName, StringComparison.OrdinalIgnoreCase);
+            });
+            
+            if (region == null)
+            {
+                var unknownISORegionName = "XX";
+                return unknownISORegionName;
+            }
+
+            return region.TwoLetterISORegionName;
         }
     }
 }

@@ -5,20 +5,22 @@ using SpeedTestLogger.Models;
 namespace SpeedTestLogger
 {
     class Program
-    {
+    {   
         static async Task Main()
         {
-            var runner = new SpeedTestRunner("Norway");
+            var config = new LoggerConfiguration();
+            
+            var runner = new SpeedTestRunner(config.LoggerLocation);
             var testData = runner.RunSpeedTest();
             var results = new TestResult
             {
-                User = "teodoran",
-                Device = 1,
-                Timestamp = 1234,
+                User = config.UserId,
+                Device = config.LoggerId,
+                Timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds(),
                 Data = testData
             };
-            var apiUrl = new Uri("http://localhost:5000");
-            var client = new SpeedTestApiClient(apiUrl);
+
+            var client = new SpeedTestApiClient(config.ApiUrl);
             await client.PublishTestResult(results);
         }
     }
