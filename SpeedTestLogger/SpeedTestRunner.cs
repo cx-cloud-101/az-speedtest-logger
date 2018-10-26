@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using SpeedTest;
@@ -23,9 +22,13 @@ namespace SpeedTestLogger
 
         public TestData RunSpeedTest()
         {
+            Console.WriteLine("Finding best test servers");
             var server = FindBestTestServer();
 
+            Console.WriteLine("Testing download speed");
             var downloadSpeed = TestDownloadSpeed(server);
+
+            Console.WriteLine("Testing upload speed");
             var uploadSpeed = TestUploadSpeed(server);
 
             return new TestData

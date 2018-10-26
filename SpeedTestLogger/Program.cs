@@ -8,10 +8,14 @@ namespace SpeedTestLogger
     {   
         static async Task Main()
         {
+            Console.WriteLine("Starting SpeedTestLogger");
             var config = new LoggerConfiguration();
-            
+
+            Console.WriteLine("Running new speedtest");
             var runner = new SpeedTestRunner(config.LoggerLocation);
             var testData = runner.RunSpeedTest();
+
+            Console.WriteLine("Got download: {0} Mbps and upload: {1} Mbps", testData.Speeds.Download, testData.Speeds.Upload);
             var results = new TestResult
             {
                 User = config.UserId,
@@ -20,8 +24,20 @@ namespace SpeedTestLogger
                 Data = testData
             };
 
-            var client = new SpeedTestApiClient(config.ApiUrl);
-            await client.PublishTestResult(results);
+            Console.WriteLine("Uploading data to speedtest API");
+            var success = false;
+            using (var client = new SpeedTestApiClient(config.ApiUrl))
+            {
+                success = await client.PublishTestResult(results);    
+            }
+            
+            if (success)
+            {
+                Console.WriteLine("Speedtest complete!");
+            }
+            else {
+                Console.WriteLine("Speedtest failed!");
+            }
         }
     }
 }

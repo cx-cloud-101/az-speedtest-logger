@@ -19,25 +19,34 @@ namespace SpeedTestLogger
             };
         }
 
-        public async Task PublishTestResult(TestResult result)
+        public async Task<bool> PublishTestResult(TestResult result)
         {
             var json = JsonConvert.SerializeObject(result);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            await PostTestResult(content);
+            return await PostTestResult(content);
         }
 
-        private async Task PostTestResult(StringContent result)
+        private async Task<bool> PostTestResult(StringContent result)
         {
             try
             {
                 var response = await _client.PostAsync("/SpeedTest", result);
-                response.EnsureSuccessStatusCode();
+                if (!response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("Upload failed! Failure response: {0}", content);
+
+                    return false;
+                }
+
+                return true;
             }
             catch (HttpRequestException e)
             {
-                Console.WriteLine("\nException Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
+                Console.WriteLine("Upload failed! {0}", e.Message);
+
+                return false;
             }
         }
 
