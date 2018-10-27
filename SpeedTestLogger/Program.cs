@@ -33,7 +33,13 @@ namespace SpeedTestLogger
 
         static async Task HandleSpeedTestMessage(Message message, CancellationToken token)
         {
-            Console.WriteLine($"Received message: {Encoding.UTF8.GetString(message.Body)}");
+            var messageBody = Encoding.UTF8.GetString(message.Body);
+            if (messageBody != "RUN_SPEEDTEST")
+            {
+                return;
+            }
+
+            Console.WriteLine($"Starting speedtest: { message.SessionId }");
 
             var runner = new SpeedTestRunner(_config.LoggerLocation);
             var testData = runner.RunSpeedTest();
@@ -41,6 +47,7 @@ namespace SpeedTestLogger
             Console.WriteLine("Got download: {0} Mbps and upload: {1} Mbps", testData.Speeds.Download, testData.Speeds.Upload);
             var results = new TestResult
             {
+                SessionId = Guid.Parse(message.SessionId),
                 User = _config.UserId,
                 Device = _config.LoggerId,
                 Timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds(),

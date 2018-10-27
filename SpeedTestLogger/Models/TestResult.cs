@@ -1,7 +1,10 @@
+using System;
+
 namespace SpeedTestLogger.Models
 {
     public class TestResult
     {
+        public Guid SessionId { get; set; }
         public string User { get; set; }
         public int Device { get; set; }
         public long Timestamp { get; set; }
