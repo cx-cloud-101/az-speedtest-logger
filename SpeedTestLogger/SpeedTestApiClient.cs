@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using SpeedTestLogger.Models;
 
 namespace SpeedTestLogger
@@ -21,7 +21,7 @@ namespace SpeedTestLogger
 
         public async Task<bool> PublishTestResult(TestResult result)
         {
-            var json = JsonConvert.SerializeObject(result);
+            var json = JsonSerializer.Serialize(result);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             return await PostTestResult(content);

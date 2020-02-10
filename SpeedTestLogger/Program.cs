@@ -58,7 +58,7 @@ namespace SpeedTestLogger
             var success = false;
             using (var client = new SpeedTestApiClient(_config.ApiUrl))
             {
-                success = await client.PublishTestResult(results);    
+                success = await client.PublishTestResult(results);
             }
 
             if (success)
