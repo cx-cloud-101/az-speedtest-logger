@@ -8,5 +8,5 @@ Notes from implementation
 ### Creating a console application that preformes speedtests
 
 * Create new console project `dotnet new console -o SpeedTestLogger`
-* Add SpeedTest.Net package `dotnet add package SpeedTest.Net --version 1.2.0`
+* Add Cloud101.SpeedTest package `dotnet add package Cloud101.SpeedTest --version 1.0.1`
 * Create basic logger
