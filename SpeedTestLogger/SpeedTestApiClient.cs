@@ -7,7 +7,7 @@ using SpeedTestLogger.Models;
 
 namespace SpeedTestLogger
 {
-    public class SpeedTestApiClient : IDisposable
+    public sealed class SpeedTestApiClient : IDisposable
     {
         private readonly HttpClient _client;
 
@@ -31,7 +31,7 @@ namespace SpeedTestLogger
         {
             try
             {
-                var response = await _client.PostAsync("/SpeedTest", result);
+                var response = await _client.PostAsync("/speedtest", result);
                 if (!response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();

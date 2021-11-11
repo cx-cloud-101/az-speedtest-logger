@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Globalization;
 using System.Linq;
+
 using SpeedTest;
 using SpeedTest.Models;
+
 using SpeedTestLogger.Models;
 
 namespace SpeedTestLogger
@@ -27,9 +29,12 @@ namespace SpeedTestLogger
 
             Console.WriteLine("Testing download speed");
             var downloadSpeed = TestDownloadSpeed(server);
+            Console.WriteLine("Download speed was: {0} Mbps", downloadSpeed);
 
             Console.WriteLine("Testing upload speed");
             var uploadSpeed = TestUploadSpeed(server);
+            Console.WriteLine("Upload speed was: {0} Mbps", uploadSpeed);
+
 
             return new TestData
             {
@@ -72,14 +77,14 @@ namespace SpeedTestLogger
                     return s;
                 })
                 .OrderBy(s => s.Latency);
-            
+
             return serversOrdersByLatency.First();
         }
 
         private double TestDownloadSpeed(Server server)
         {
             var downloadSpeed = _client.TestDownloadSpeed(server, _settings.Download.ThreadsPerUrl);
-            
+
             return ConvertSpeedToMbps(downloadSpeed);
         }
 
@@ -99,18 +104,18 @@ namespace SpeedTestLogger
         {
             // Wondering why this culture isn't supported? https://stackoverflow.com/a/41879861/840453
             var unsupportedCultureLCID = 4096;
-            
+
             var allRegions = CultureInfo
                 .GetCultures(CultureTypes.SpecificCultures)
                 .Select(culture => culture.LCID)
                 .Where(lcid => lcid != unsupportedCultureLCID)
                 .Select(lcid => new RegionInfo(lcid));
-            
+
             var region = allRegions.FirstOrDefault(c =>
             {
                 return String.Equals(c.EnglishName, englishName, StringComparison.OrdinalIgnoreCase);
             });
-            
+
             if (region == null)
             {
                 var unknownISORegionName = "XX";

@@ -7,7 +7,7 @@ using SpeedTestLogger.Models;
 
 namespace SpeedTestLogger
 {
-    class Program
+    public static class Program
     {
         private static LoggerConfiguration _config;
         private static SubscriptionClient _subscriptionClient;
@@ -15,7 +15,6 @@ namespace SpeedTestLogger
         static async Task Main()
         {
             Console.WriteLine("Starting SpeedTestLogger");
-            Console.WriteLine("Press any key to exit");
 
             _config = new LoggerConfiguration();
             var options = new MessageHandlerOptions(HandleException)
@@ -65,7 +64,8 @@ namespace SpeedTestLogger
             {
                 Console.WriteLine("Speedtest complete!");
             }
-            else {
+            else
+            {
                 Console.WriteLine("Speedtest failed!");
             }
         }
