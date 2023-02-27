@@ -1,48 +1,30 @@
-﻿using System;
-using System.Globalization;
-using System.IO;
+﻿using System.Globalization;
 using Microsoft.Extensions.Configuration;
 
-namespace SpeedTestLogger
+namespace SpeedTestLogger;
+
+public class LoggerConfiguration
 {
-    public class LoggerConfiguration
+    public readonly string UserId;
+    public readonly int LoggerId;
+    public readonly RegionInfo LoggerLocation;
+    public readonly Uri ApiUrl;
+    public readonly string ServiceBusConnectionString;
+
+    public LoggerConfiguration()
     {
-        public readonly string UserId;
-        public readonly int LoggerId;
-        public readonly RegionInfo LoggerLocation;
-        public readonly Uri ApiUrl;
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json");
 
-        public readonly ServiceBusConfiguration ServiceBus;
+        var configuration = builder.Build();
 
-        public LoggerConfiguration()
-        {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json")
-                .AddJsonFile("appsettings.Development.json");
+        UserId = configuration["userId"];
+        LoggerId = int.Parse(configuration["loggerId"]);
+        LoggerLocation = new RegionInfo(configuration["loggerLocationCountryCode"]);
+        ApiUrl = new Uri(configuration["speedTestApiUrl"]);
+        ServiceBusConnectionString = configuration["serviceBusConnectionString"];
 
-            var configuration = builder.Build();
-
-            UserId = configuration["userId"];
-            LoggerId = Int32.Parse(configuration["loggerId"]);
-            LoggerLocation = new RegionInfo(configuration["loggerLocationCountryCode"]);
-            ApiUrl = new Uri(configuration["speedTestApiUrl"]);
-
-            ServiceBus = new ServiceBusConfiguration(configuration);
-        }
-    }
-
-    public class ServiceBusConfiguration
-    {
-        public readonly string ConnectionString;
-        public readonly string TopicName;
-        public readonly string SubscriptionName;
-
-        public ServiceBusConfiguration(IConfigurationRoot configuration)
-        {
-            ConnectionString = configuration["serviceBus:connectionString"];
-            TopicName = configuration["serviceBus:topicName"];
-            SubscriptionName = configuration["serviceBus:subscriptionName"];
-        }
+        Console.WriteLine("Logger located in {0}", LoggerLocation.EnglishName);
     }
 }

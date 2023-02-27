@@ -1,46 +1,89 @@
-using System;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace SpeedTestLogger.Models
-{
-    public class TestResult
-    {
-        public Guid SessionId { get; set; }
-        public string User { get; set; }
-        public int Device { get; set; }
-        public long Timestamp { get; set; }
-        public TestData Data { get; set; }
-    }
+namespace SpeedTestLogger.Models;
 
-    public class TestData
-    {
-        public TestSpeeds Speeds { get; set; }
-        public TestClient Client { get; set; }
-        public TestServer Server { get; set; }
-    }
+public record TestResult(
+    [Required]
+    Guid SessionId,
 
-    public class TestSpeeds
-    {
-        public double Download { get; set; }
-        public double Upload { get; set; }
-    }
+    [StringLength(500, MinimumLength = 2)]
+    [Required]
+    string User,
 
-    public class TestClient
-    {
-        public string Ip { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public string Isp { get; set; }
-        public string Country { get; set; }
-    }
+    [Range(1, int.MaxValue)]
+    [Required]
+    int Device,
 
-    public class TestServer
-    {
-        public string Host { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public string Country { get; set; }
-        public double Distance { get; set; }
-        public int Ping { get; set; }
-        public int Id { get; set; }
-    }
-}
+    [Range(0, long.MaxValue)]
+    [Required]
+    long Timestamp,
+
+    [Required]
+    TestData Data);
+
+public record TestData(
+    [Required]
+    TestSpeeds Speeds,
+
+    [Required]
+    TestClient Client,
+
+    [Required]
+    TestServer Server);
+
+public record TestSpeeds(
+    [Range(0, 3000)]
+    [Required]
+    double Download,
+
+    [Range(0, 3000)]
+    [Required]
+    double Upload);
+
+public record TestClient(
+    [RegularExpression(@"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")]
+    [Required]
+    string Ip,
+
+    [Range(-90, 90)]
+    double Latitude,
+
+    [Range(-180, 180)]
+    double Longitude,
+
+    [StringLength(500, MinimumLength = 2)]
+    [Required]
+    string Isp,
+
+    [RegularExpression(@"^([A-Z]){2}$")]
+    [Required]
+    string Country);
+
+public record TestServer(
+    [StringLength(500, MinimumLength = 2)]
+    [Required]
+    string Host,
+
+    [Range(-90, 90)]
+    [Required]
+    double Latitude,
+
+    [Range(-180, 180)]
+    [Required]
+    double Longitude,
+
+    [RegularExpression(@"^([A-Z]){2}$")]
+    [Required]
+    string Country,
+
+    [Range(0, 21000000)]
+    [Required]
+    double Distance,
+
+    [Range(0, int.MaxValue)]
+    [Required]
+    int Ping,
+
+    [Range(0, int.MaxValue)]
+    [Required]
+    int Id);

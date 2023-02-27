@@ -1,80 +1,64 @@
-﻿using System;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.ServiceBus;
+﻿using Azure.Messaging.ServiceBus;
+using SpeedTestLogger;
 using SpeedTestLogger.Models;
 
-namespace SpeedTestLogger
-{
-    public static class Program
+Console.WriteLine("Hello SpeedTestLogger!");
+
+var config = new LoggerConfiguration();
+
+var serviceBusClient = new ServiceBusClient(config.ServiceBusConnectionString);
+var processor = serviceBusClient.CreateProcessor("run-speedtest", "speedtest-logger-subscription",
+    new ServiceBusProcessorOptions
     {
-        private static LoggerConfiguration _config;
-        private static SubscriptionClient _subscriptionClient;
+        MaxConcurrentCalls = 1,
+        AutoCompleteMessages = true
+    });
 
-        static async Task Main()
-        {
-            Console.WriteLine("Starting SpeedTestLogger");
+processor.ProcessMessageAsync += MessageHandler;
 
-            _config = new LoggerConfiguration();
-            var options = new MessageHandlerOptions(HandleException)
-            {
-                MaxConcurrentCalls = 1,
-                AutoComplete = true
-            };
-            _subscriptionClient = new SubscriptionClient(_config.ServiceBus.ConnectionString, _config.ServiceBus.TopicName, _config.ServiceBus.SubscriptionName);
-            _subscriptionClient.RegisterMessageHandler(HandleSpeedTestMessage, options);
+processor.ProcessErrorAsync += ErrorHandler;
 
-            Console.ReadKey();
+await processor.StartProcessingAsync();
 
-            await _subscriptionClient.CloseAsync();
-        }
+Console.ReadKey();
 
-        static async Task HandleSpeedTestMessage(Message message, CancellationToken token)
-        {
-            var messageBody = Encoding.UTF8.GetString(message.Body);
-            if (messageBody != "RUN_SPEEDTEST")
-            {
-                return;
-            }
 
-            Console.WriteLine($"Starting speedtest: { message.SessionId }");
+async Task MessageHandler(ProcessMessageEventArgs args)
+{
+    string body = args.Message.Body.ToString();
 
-            var runner = new SpeedTestRunner(_config.LoggerLocation);
-            var testData = runner.RunSpeedTest();
-
-            Console.WriteLine("Got download: {0} Mbps and upload: {1} Mbps", testData.Speeds.Download, testData.Speeds.Upload);
-            var results = new TestResult
-            {
-                SessionId = Guid.Parse(message.SessionId),
-                User = _config.UserId,
-                Device = _config.LoggerId,
-                Timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds(),
-                Data = testData
-            };
-
-            Console.WriteLine("Uploading data to speedtest API");
-            var success = false;
-            using (var client = new SpeedTestApiClient(_config.ApiUrl))
-            {
-                success = await client.PublishTestResult(results);
-            }
-
-            if (success)
-            {
-                Console.WriteLine("Speedtest complete!");
-            }
-            else
-            {
-                Console.WriteLine("Speedtest failed!");
-            }
-        }
-
-        static Task HandleException(ExceptionReceivedEventArgs exceptionReceivedEventArgs)
-        {
-            Console.WriteLine($"Message handler encountered an exception {exceptionReceivedEventArgs.Exception}.");
-
-            return Task.CompletedTask;
-        }
+    if (body != "RUN_SPEEDTEST")
+    {
+        return;
     }
+
+    Console.WriteLine($"Starting speedtest: {args.Message.SessionId}");
+
+    var runner = new SpeedTestRunner(config.LoggerLocation);
+    var testData = runner.RunSpeedTest();
+    var results = new TestResult(
+        SessionId: Guid.NewGuid(),
+        User: config.UserId,
+        Device: config.LoggerId,
+        Timestamp: DateTimeOffset.Now.ToUnixTimeMilliseconds(),
+        Data: testData);
+
+    using var client = new SpeedTestApiClient(config.ApiUrl);
+    var success = await client.PublishTestResult(results);
+
+    if (success)
+    {
+        Console.WriteLine("Speedtest complete!");
+    }
+    else
+    {
+        Console.WriteLine("Speedtest failed!");
+    }
+}
+
+// handle any errors when receiving messages
+Task ErrorHandler(ProcessErrorEventArgs args)
+{
+    Console.WriteLine($"Message handler encountered an exception {args.Exception}.");
+    return Task.CompletedTask;
 }
